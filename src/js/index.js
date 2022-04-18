@@ -10,6 +10,7 @@ const saveBtn = document.getElementById('savebtn');
 const nameInput = document.getElementById('name');
 const surnameInput = document.getElementById('surname');
 const lastNameInput = document.getElementById('lastName');
+const modalCreate = document.getElementById('modal-1');
 const modalSelect = document.getElementById('modalSelect');
 const selectInput = document.getElementById('selectInput');
 
@@ -19,24 +20,62 @@ const getData = async () => {
   return result;
 };
 
+const dataHandler = (date) => {
+  let dateH = new Date(date);
+  let dd = dateH.getDate();
+  let mm = dateH.getMonth() + 1;
+  let yyyy = dateH.getFullYear();
+  if (dd < 10) {
+    dd = '0' + dd;
+  };
+  if (mm < 10) {
+    mm = '0' + mm;
+  };
+  const handledDate = dd + '.' + mm + '.' + yyyy;
+  return handledDate;
+}
+
+const timeHandler = (date) => {
+  let timeH = new Date(date);
+  let hh = timeH.getHours();
+  let mm = timeH.getMinutes();
+  if (hh < 10) {
+    hh = '0' + hh;
+  };
+  if (mm < 10) {
+    mm = '0' + mm;
+  };
+  const handledTime = hh + ':' + mm;
+  return handledTime;
+}
+
 const renderClients = async () => {
+  tableData.innerHTML = '';
   const clients = await getData();
   clients.forEach(client => {
-    const clientRow = el('div.table-grid');
-    const clientId = el('div', client.id);
-    const clientFio = el('div', client.surname + ' ' + client.name + ' ' + client.lastName);
-    const clientCreatedAt = el('div', client.createdAt);
-    const clientUpdatedAt = el('div', client.updatedAt);
+    const clientRow = el('div.table__grid.table-row');
+    const clientId = el('div.table__client-cell.table__id', client.id);
+    const clientFio = el('div.table__client-cell', client.surname + ' ' + client.name + ' ' + client.lastName);
+    const clientCreatedAt = el('div.table__client-cell', el('div.table__date', dataHandler(client.createdAt)), el('div.table__time', timeHandler(client.createdAt)));
+    const clientUpdatedAt = el('div.table__client-cell', el('div.table__date', dataHandler(client.updatedAt)), el('div.table__time', timeHandler(client.updatedAt)));
     const contacts = client.contacts;
-    const clientContacts = el('div');
+    const clientContacts = el('div.table__client-cell');
     contacts.forEach(contact => {
       const newContact = el('div', contact.value);
       setChildren(clientContacts, newContact);
     })
-    const clientChangeBtn = el('button', 'Изменить');
-    const clientRemoveBtn = el('button', 'Удалить');
+    const clientEditBtn = el('button.table__btn.edit-btn', 'Изменить');
+    const clientRemoveBtn = el('button.table__btn.remove-btn', 'Удалить');
+
+    clientRemoveBtn.addEventListener('click', () => {
+      deleteClient({ element: clientRow, client: client })
+    })
+    clientEditBtn.addEventListener('click', () => {
+      openEditModal(client);
+    })
+
     setChildren(tableData, clientRow);
-    setChildren(clientRow, [clientId, clientFio, clientCreatedAt, clientUpdatedAt, clientContacts, clientChangeBtn, clientRemoveBtn])
+    setChildren(clientRow, [clientId, clientFio, clientCreatedAt, clientUpdatedAt, clientContacts, clientEditBtn, clientRemoveBtn])
   });
 };
 
@@ -64,7 +103,6 @@ const createClient = () => {
   nameInput.value = '';
   surnameInput.value = '';
   lastNameInput.value = '';
-  const modalCreate = document.getElementById('modal-1');
   modalCreate.classList.toggle('is-open');
   modalCreate.setAttribute('aria-hidden', 'true');
   renderClients();
@@ -72,3 +110,21 @@ const createClient = () => {
 
 saveBtn.addEventListener('click', createClient);
 console.log(getData());
+
+const deleteClient = async ({element, client}) => {
+  if (!confirm('Вы уверены?')) {
+    return
+  };
+  element.remove();
+  await fetch(`http://localhost:3000/api/clients/${client.id}`, {
+    method: 'DELETE'
+  });
+  renderClients();
+}
+
+const openEditModal = async (client) => {
+  MicroModal.show('modal-1');
+  nameInput.value = client.name;
+  surnameInput.value = client.surname;
+  lastNameInput.value = client.lastName;
+};
