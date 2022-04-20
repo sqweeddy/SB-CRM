@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin");
+const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
 const { extendDefaultPlugins } = require("svgo");
 
 module.exports = (env) => ({
@@ -28,8 +29,12 @@ module.exports = (env) => ({
         ],
       },
       {
-        test: /\.(png|svg|jpg|jpeg|gif|ttf)$/i,
+        test: /\.(png|jpg|jpeg|gif|ttf)$/i,
         type: 'asset/resource',
+      },
+      {
+        test: /\.svg$/,
+        loader: 'svg-sprite-loader',
       },
     ]
   },
@@ -78,6 +83,7 @@ module.exports = (env) => ({
     new MiniCssExtractPlugin({
       filename: 'main.[hash].css'
     }),
+    new SpriteLoaderPlugin()
   ],
   devServer: {
     historyApiFallback: true,

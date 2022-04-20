@@ -1,21 +1,27 @@
 import '../css/normalize.css';
 import '../css/modal.css';
+import '../css/choices.min.css'
 import '../css/style.css';
-import { el, setChildren} from 'redom';
+import canelIcon from '../img/cancel.svg';
+import { el, setChildren, mount} from 'redom';
 import MicroModal from 'micromodal';
-MicroModal.init();
+import Choices from 'choices.js';
 
+
+
+const apiUrl = 'http://localhost:3000/api/clients/'
 const tableData = document.querySelector('.table__data');
 const saveBtn = document.getElementById('savebtn');
 const nameInput = document.getElementById('name');
 const surnameInput = document.getElementById('surname');
 const lastNameInput = document.getElementById('lastName');
-const modalCreate = document.getElementById('modal-1');
-const modalSelect = document.getElementById('modalSelect');
-const selectInput = document.getElementById('selectInput');
+const modalTitle = document.getElementById('modal-1-title');
+const modalContacts = document.getElementById('modalContacts');
+const clientId = document.querySelector('.modal__client-id');
+const modalBtnAddContact = document.getElementById('modalBtnAddContact');
 
 const getData = async () => {
-  const response = await fetch('http://localhost:3000/api/clients');
+  const response = await fetch(apiUrl);
   const result = await response.json();
   return result;
 };
@@ -73,42 +79,102 @@ const renderClients = async () => {
     clientEditBtn.addEventListener('click', () => {
       openEditModal(client);
     })
+    clientEditBtn.setAttribute('data-micromodal-trigger', 'modal-1');
 
-    setChildren(tableData, clientRow);
+
+    mount(tableData, clientRow);
     setChildren(clientRow, [clientId, clientFio, clientCreatedAt, clientUpdatedAt, clientContacts, clientEditBtn, clientRemoveBtn])
+  });
+
+  MicroModal.init({
+    onShow: modal => console.info(`${modal.id} is shown`),
+    onClose: modal => {clearModal(); console.info(`${modal.id} is hide`)},
+    awaitCloseAnimation: true,
   });
 };
 
 renderClients();
 
+const createContactAdd = (selectValue=null, inputValue=null) => {
+  const iV = inputValue == null ? '' : inputValue;
+  const sV = selectValue == null ? 'tel' : selectValue;
+  const contactWrapper = el('div.modal__contact-wrapper')
+    const newSelect = el('select.modal__select',
+    el('option', { value: 'tel' }, 'Телефон'),
+    el('option', { value: 'addtel' }, 'Доп. телефон'),
+    el('option', { value: 'Email' }, 'Email'),
+    el('option', { value: 'VK' }, 'VK'),
+    el('option', { value: 'Facebook' }, 'Facebook'));
 
-const createClient = () => {
-  fetch('http://localhost:3000/api/clients', {
-    method: 'POST',
+    const newInput = el('input.modal__contact-input', { type: 'text', placeholder: 'Введите данные контакта' });
+    newInput.value = iV;
+    newSelect.value = sV;
+    const removeContact = el('button.modal__contact-remove', 'X');
+    removeContact.addEventListener('click', () => {
+      contactWrapper.remove();
+    })
+
+    setChildren(contactWrapper, [newSelect, newInput, removeContact]);
+
+    mount(modalContacts, contactWrapper);
+    const choices = new Choices(newSelect, {
+      shouldSort: false,
+      searchEnabled: false,
+      removeItemButton: false,
+      itemSelectText: '',
+      allowHTML: true
+    });
+};
+
+modalBtnAddContact.addEventListener('click', () => {
+  if (document.querySelectorAll('.modal__contact-wrapper').length < 10) {
+    createContactAdd();
+  }
+});
+
+const parseContacts = () => {
+  const contacts = [];
+  const select = document.querySelectorAll('.modal__select');
+  const input = document.querySelectorAll('.modal__contact-input');
+  for (let i = 0; i < select.length; i++) {
+    if (input[i].value) {
+      const newContact = {};
+      newContact.type = select[i].value;
+      newContact.value = input[i].value;
+      contacts.push(newContact);
+
+      select[i].value = '';
+      input[i].value = '';
+    }
+  };
+  document.querySelectorAll('.modal__contact-wrapper').forEach(el => el.remove());
+  return contacts;
+}
+
+const createClient = async (id = null) => {
+  const method = id == null ? 'POST' : 'PATCH';
+  const clientId = id == null ? '' : id;
+  fetch(new URL(clientId, apiUrl), {
+    method: method,
     body: JSON.stringify({
       name: nameInput.value.trim(),
       surname: surnameInput.value.trim(),
       lastName: lastNameInput.value.trim(),
-      contacts: [
-        {
-          type: modalSelect.value,
-          value: selectInput.value,
-        }
-      ]
+      contacts: parseContacts(),
     }),
     headers: {
       'Content-Type': 'application/json'
     }
   });
-  nameInput.value = '';
-  surnameInput.value = '';
-  lastNameInput.value = '';
-  modalCreate.classList.toggle('is-open');
-  modalCreate.setAttribute('aria-hidden', 'true');
+  MicroModal.close('modal-1');
   renderClients();
 };
 
-saveBtn.addEventListener('click', createClient);
+saveBtn.addEventListener('click', () => {
+  if (clientId.textContent != '') {
+    createClient(clientId.textContent)
+  } else createClient();
+});
 console.log(getData());
 
 const deleteClient = async ({element, client}) => {
@@ -122,9 +188,23 @@ const deleteClient = async ({element, client}) => {
   renderClients();
 }
 
+const clearModal = () => {
+  document.querySelectorAll('.modal__contact-wrapper').forEach(el => el.remove());
+  document.querySelectorAll('.modal__input').forEach(el => el.value = '');
+  clientId.textContent = '';
+  modalTitle.textContent = 'Новый клиент';
+}
+
 const openEditModal = async (client) => {
-  MicroModal.show('modal-1');
+  modalTitle.textContent = 'Изменить данные';
   nameInput.value = client.name;
   surnameInput.value = client.surname;
   lastNameInput.value = client.lastName;
+  clientId.textContent = client.id;
+  client.contacts.forEach(contact => {
+    createContactAdd(contact.type, contact.value);
+  });
+  // saveBtn.addEventListener('click', () => {
+  //   createClient(client.id);
+  // });
 };
