@@ -1,11 +1,19 @@
 import '../css/normalize.css';
 import '../css/modal.css';
 import '../css/choices.min.css'
-import '../css/style.css';
 import canelIcon from '../img/cancel.svg';
+import editIcon from '../img/edit.svg';
+import vkIcon from '../img/VK.svg';
+import fbIcon from '../img/Facebook.svg';
+import telIcon from '../img/tel.svg';
+import addtelIcon from '../img/addtel.svg';
+import EmailIcon from '../img/Email.svg';
 import { el, setChildren, mount} from 'redom';
 import MicroModal from 'micromodal';
 import Choices from 'choices.js';
+import tippy from 'tippy.js';
+import 'tippy.js/dist/tippy.css';
+import '../css/style.css';
 
 
 
@@ -55,6 +63,16 @@ const timeHandler = (date) => {
   return handledTime;
 }
 
+const makeid = (length) => {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
 const renderClients = async () => {
   tableData.innerHTML = '';
   const clients = await getData();
@@ -65,10 +83,33 @@ const renderClients = async () => {
     const clientCreatedAt = el('div.table__client-cell', el('div.table__date', dataHandler(client.createdAt)), el('div.table__time', timeHandler(client.createdAt)));
     const clientUpdatedAt = el('div.table__client-cell', el('div.table__date', dataHandler(client.updatedAt)), el('div.table__time', timeHandler(client.updatedAt)));
     const contacts = client.contacts;
-    const clientContacts = el('div.table__client-cell');
+    const clientContacts = el('div.table__client-cell.contacts-grid');
+    // if (client.contacts.length < 6) {
+
+    // } else {
+
+    // }
     contacts.forEach(contact => {
-      const newContact = el('div', contact.value);
-      setChildren(clientContacts, newContact);
+      const id = makeid(7);
+      const btn = el('button.table__tooltip');
+      btn.setAttribute('id', id)
+      btn.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#${contact.type}"></use></svg>`;
+      const text = `#${id}`;
+      tippy(text, {
+        content: contact.value,
+      })
+      mount(clientContacts, btn);
+
+
+      // const newContact = el('div', contact.value);
+      // setChildren(clientContacts, newContact);
+
+      // const link = '#' + contact.type;
+      // const icon = el('svg.table__contact-icon');
+      // const use = el('use');
+      // use.setAttribute('xlink:href', link);
+      // mount(clientContacts, icon);
+      // mount(icon, use);
     })
     const clientEditBtn = el('button.table__btn.edit-btn', 'Изменить');
     const clientRemoveBtn = el('button.table__btn.remove-btn', 'Удалить');
@@ -85,7 +126,6 @@ const renderClients = async () => {
     mount(tableData, clientRow);
     setChildren(clientRow, [clientId, clientFio, clientCreatedAt, clientUpdatedAt, clientContacts, clientEditBtn, clientRemoveBtn])
   });
-
   MicroModal.init({
     onShow: modal => console.info(`${modal.id} is shown`),
     onClose: modal => {clearModal(); console.info(`${modal.id} is hide`)},
@@ -208,3 +248,12 @@ const openEditModal = async (client) => {
   //   createClient(client.id);
   // });
 };
+
+const id = makeid(7);
+const btnTest = document.getElementById('asd');
+btnTest.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#VK"></use></svg>`
+btnTest.setAttribute('id', id);
+const text = `#${id}`
+tippy(text, {
+  content: 'text',
+})
