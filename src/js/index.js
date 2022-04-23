@@ -8,6 +8,8 @@ import fbIcon from '../img/Facebook.svg';
 import telIcon from '../img/tel.svg';
 import addtelIcon from '../img/addtel.svg';
 import EmailIcon from '../img/Email.svg';
+import arrowIcon from '../img/arrow.svg';
+import plus from '../img/plus.svg';
 import { el, setChildren, mount} from 'redom';
 import MicroModal from 'micromodal';
 import Choices from 'choices.js';
@@ -17,7 +19,12 @@ import '../css/style.css';
 
 
 
-const apiUrl = 'http://localhost:3000/api/clients/'
+const apiUrl = 'http://localhost:3000/api/clients/';
+const search = document.getElementById('search');
+const id = document.getElementById('id');
+const fio = document.getElementById('fio');
+const createdAt = document.getElementById('create-date');
+const updatedAt = document.getElementById('change-date');
 const tableData = document.querySelector('.table__data');
 const saveBtn = document.getElementById('savebtn');
 const nameInput = document.getElementById('name');
@@ -73,9 +80,9 @@ const makeid = (length) => {
   return result;
 }
 
-const renderClients = async () => {
+const renderClients = async (clients=[]) => {
   tableData.innerHTML = '';
-  const clients = await getData();
+  clients = clients.length === 0 ? await getData() : clients;
   clients.forEach(client => {
     const clientRow = el('div.table__grid.table-row');
     const clientId = el('div.table__client-cell.table__id', client.id);
@@ -90,29 +97,27 @@ const renderClients = async () => {
 
     // }
     contacts.forEach(contact => {
-      const id = makeid(7);
       const btn = el('button.table__tooltip');
-      btn.setAttribute('id', id)
       btn.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#${contact.type}"></use></svg>`;
-      const text = `#${id}`;
-      tippy(text, {
-        content: contact.value,
+      let tooltip;
+      if (contact.type == 'tel' || contact.type == 'addtel') {
+          tooltip = `<a class="table__tel-link" href="tel:${contact.value}">${contact.value}</a>`;
+      } else {
+        tooltip = `${contact.type}: <a class="table__contact-link" href="${contact.value}">${contact.value}</a>`;
+      }
+      tippy(btn, {
+        content: tooltip,
+        theme: 'crm',
+        allowHTML: true,
+        interactive: true,
       })
       mount(clientContacts, btn);
-
-
-      // const newContact = el('div', contact.value);
-      // setChildren(clientContacts, newContact);
-
-      // const link = '#' + contact.type;
-      // const icon = el('svg.table__contact-icon');
-      // const use = el('use');
-      // use.setAttribute('xlink:href', link);
-      // mount(clientContacts, icon);
-      // mount(icon, use);
     })
-    const clientEditBtn = el('button.table__btn.edit-btn', 'Изменить');
-    const clientRemoveBtn = el('button.table__btn.remove-btn', 'Удалить');
+
+    const clientEditBtn = el('button.table__btn.edit-btn');
+    clientEditBtn.innerHTML = `<svg class="table__action-icon"><use xlink:href="#edit"></use></svg>Изменить`;
+    const clientRemoveBtn = el('button.table__btn.remove-btn');
+    clientRemoveBtn.innerHTML = `<svg class="table__action-icon"><use xlink:href="#cancel"></use></svg>Удалить`;
 
     clientRemoveBtn.addEventListener('click', () => {
       deleteClient({ element: clientRow, client: client })
@@ -132,8 +137,6 @@ const renderClients = async () => {
     awaitCloseAnimation: true,
   });
 };
-
-renderClients();
 
 const createContactAdd = (selectValue=null, inputValue=null) => {
   const iV = inputValue == null ? '' : inputValue;
@@ -249,11 +252,187 @@ const openEditModal = async (client) => {
   // });
 };
 
-const id = makeid(7);
-const btnTest = document.getElementById('asd');
-btnTest.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#VK"></use></svg>`
-btnTest.setAttribute('id', id);
-const text = `#${id}`
-tippy(text, {
-  content: 'text',
+
+/* FILTER */
+
+id.addEventListener('click', async () => {
+  fio.classList.remove('table__title--active');
+  fio.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  createdAt.classList.remove('table__title--active');
+  createdAt.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  updatedAt.classList.remove('table__title--active');
+  updatedAt.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  let sorted = [];
+  const clients = await getData();
+  sorted = clients;
+  const icon = id.querySelector('.table__sort-icon');
+  if (id.classList.contains('table__title--active') && id.querySelector('.table__sort-icon--active')) {
+    sorted.sort(function(a, b) {
+      if(a.id < b.id ) return 1;
+      if(a.id > b.id ) return -1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else if (id.classList.contains('table__title--active')) {
+    sorted.sort(function(a, b) {
+      if(a.id < b.id ) return -1;
+      if(a.id > b.id ) return 1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else {
+    sorted.sort(function(a, b) {
+      if(a.id < b.id ) return -1;
+      if(a.id > b.id ) return 1;
+      return 0;
+    });
+    id.classList.toggle('table__title--active');
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  }
 })
+
+fio.addEventListener('click', async () => {
+  id.classList.remove('table__title--active');
+  id.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  createdAt.classList.remove('table__title--active');
+  createdAt.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  updatedAt.classList.remove('table__title--active');
+  updatedAt.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  let sorted = [];
+  const clients = await getData();
+  sorted = clients;
+  const icon = fio.querySelector('.table__sort-icon');
+  if (fio.classList.contains('table__title--active') && fio.querySelector('.table__sort-icon--active')) {
+    sorted.sort(function(a, b) {
+      if(a.surname < b.surname ) return 1;
+      if(a.surname > b.surname ) return -1;
+      if (a.lastName > b.lastName) return 1;
+      if (a.lastName < b.lastName) return -1;
+      if(a.name < b.name ) return -1;
+      if(a.name > b.name ) return 1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else if (fio.classList.contains('table__title--active')) {
+    sorted.sort(function(a, b) {
+      if(a.surname < b.surname ) return -1;
+      if(a.surname > b.surname ) return 1;
+      if (a.lastName > b.lastName) return -1;
+      if (a.lastName < b.lastName) return 1;
+      if(a.name < b.name ) return 1;
+      if(a.name > b.name ) return -1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else {
+    sorted.sort(function(a, b) {
+      if(a.surname < b.surname ) return -1;
+      if(a.surname > b.surname ) return 1;
+      if (a.lastName > b.lastName) return -1;
+      if (a.lastName < b.lastName) return 1;
+      if(a.name < b.name ) return 1;
+      if(a.name > b.name ) return -1;
+      return 0;
+    });
+    fio.classList.toggle('table__title--active');
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  }
+})
+
+createdAt.addEventListener('click', async () => {
+  id.classList.remove('table__title--active');
+  id.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  fio.classList.remove('table__title--active');
+  fio.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  updatedAt.classList.remove('table__title--active');
+  updatedAt.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  let sorted = [];
+  const clients = await getData();
+  sorted = clients;
+  const icon = createdAt.querySelector('.table__sort-icon');
+  if (createdAt.classList.contains('table__title--active') && createdAt.querySelector('.table__sort-icon--active')) {
+    sorted.sort(function(a, b) {
+      if(a.createdAt < b.createdAt) return 1;
+      if(a.createdAt > b.createdAt) return -1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else if (createdAt.classList.contains('table__title--active')) {
+    sorted.sort(function(a, b) {
+      if(a.createdAt < b.createdAt) return -1;
+      if(a.createdAt > b.createdAt) return 1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else {
+    sorted.sort(function(a, b) {
+      if(a.createdAt < b.createdAt) return -1;
+      if(a.createdAt > b.createdAt) return 1;
+      return 0;
+    });
+    createdAt.classList.toggle('table__title--active');
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  }
+})
+
+updatedAt.addEventListener('click', async () => {
+  id.classList.remove('table__title--active');
+  id.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  createdAt.classList.remove('table__title--active');
+  createdAt.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  fio.classList.remove('table__title--active');
+  fio.querySelector('.table__sort-icon').classList.remove('table__sort-icon--active');
+  let sorted = [];
+  const clients = await getData();
+  sorted = clients;
+  const icon = updatedAt.querySelector('.table__sort-icon');
+  if (updatedAt.classList.contains('table__title--active') && updatedAt.querySelector('.table__sort-icon--active')) {
+    sorted.sort(function(a, b) {
+      if(a.updatedAt < b.updatedAt) return 1;
+      if(a.updatedAt > b.updatedAt) return -1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else if (updatedAt.classList.contains('table__title--active')) {
+    sorted.sort(function(a, b) {
+      if(a.updatedAt < b.updatedAt) return -1;
+      if(a.updatedAt > b.updatedAt) return 1;
+      return 0;
+    });
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  } else {
+    sorted.sort(function(a, b) {
+      if(a.updatedAt < b.updatedAt) return -1;
+      if(a.updatedAt > b.updatedAt) return 1;
+      return 0;
+    });
+    updatedAt.classList.toggle('table__title--active');
+    icon.classList.toggle('table__sort-icon--active');
+    renderClients(sorted)
+  }
+})
+
+/* Search */
+
+const filtration = async () => {
+  const clients = await getData();
+  const filtredArr = clients.filter(client => client.name.includes(search.value) || client.surname.includes(search.value) || client.lastName.includes(search.value));
+  renderClients(filtredArr);
+}
+
+search.addEventListener('input', async () => {
+  setTimeout(filtration, 300)
+})
+
+renderClients();

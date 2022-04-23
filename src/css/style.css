@@ -77,13 +77,38 @@
 
 .table__grid {
   display:  grid;
-  grid-template-columns: 146px 274px 175px 173px 160px  1fr 1fr;
+  grid-template-columns: 146px 274px 165px 165px 160px  1fr 1fr;
   align-items: center;
 }
 
 .table__title {
+  display: flex;
+  align-items: center;
   font-size: 12px;
   color: #B0B0B0;
+}
+
+.table__title:not(:nth-last-child(-n+2)) {
+  cursor: pointer;
+}
+
+.table__title--active {
+  color: #9873FF;
+}
+
+.table__title--active .table__sort-icon {
+  opacity: 1;
+}
+
+.table__sort-icon {
+  margin-left: 5px;
+  height: 10px;
+  width: 10px;
+  opacity: .7;
+}
+
+.table__sort-icon--active {
+  transform: rotate(180deg);
 }
 
 .table__data {
@@ -123,14 +148,40 @@
 }
 
 .table__tooltip{
+  height: 20px;
+  width: 20px;
   border: none;
   background: transparent;
 }
 
+.tippy-box[data-theme~='crm'] {
+  font-size: 12px;
+}
+
+.table__contact-link {
+  color: #9873FF;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.table__tel-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+
 .table__contact-icon {
-  height: 20px;
-  width: 20px;
+  height: 100%;
+  width: 100%;
   fill: #9873FF;
+  opacity: .7;
+}
+
+.table__action-icon {
+  margin-right: 3px;
+  height: 16px;
+  width: 16px;
   opacity: .7;
 }
 
@@ -146,9 +197,10 @@
 }
 
 .table__btn {
-  padding-left: 14px;
+  display: flex;
   background: transparent;
   border: none;
+  font-size: 14px;
   color: #333333;
   cursor: pointer;
 }

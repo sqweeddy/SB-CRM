@@ -41,6 +41,7 @@
 .modal__close {
   background: transparent;
   border: 0;
+  cursor: pointer;
 }
 
 .modal__header .modal__close:before { content: "\2715"; }
@@ -100,6 +101,12 @@
   transition: transform .25s ease-out,-webkit-transform .25s ease-out;
 }
 
+.modal__btn-icon {
+  margin-right: 5px;
+  height: 14px;
+  width: 14px;
+}
+
 .modal__btn-cancel {
   padding: 12.5px 20px;
   font-size: 12px;
@@ -120,7 +127,9 @@
 }
 
 .modal__btn-add-contact {
-  max-width: 129px;
+  display: flex;
+  align-items: center;
+  max-width: 150px;
   border: none;
   font-size: 14px;
   font-weight: 600;
