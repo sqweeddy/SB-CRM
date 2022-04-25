@@ -80,9 +80,31 @@ const makeid = (length) => {
   return result;
 }
 
+// const createContactIcon = (contacts) => {
+//   contacts.forEach(contact => {
+//     const btn = el('button.table__tooltip');
+//     btn.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#${contact.type}"></use></svg>`;
+//     let tooltip;
+//     if (contact.type == 'tel' || contact.type == 'addtel') {
+//         tooltip = `<a class="table__tel-link" href="tel:${contact.value}">${contact.value}</a>`;
+//     } else {
+//       tooltip = `${contact.type}: <a class="table__contact-link" href="${contact.value}">${contact.value}</a>`;
+//     }
+//     tippy(btn, {
+//       content: tooltip,
+//       theme: 'crm',
+//       allowHTML: true,
+//       interactive: true,
+//     })
+//     mount(clientContacts, btn);
+//   })
+// }
+
 const renderClients = async (clients=[]) => {
-  tableData.innerHTML = '';
+  const loader = el('div.loader');
+  mount(tableData, loader);
   clients = clients.length === 0 ? await getData() : clients;
+  tableData.innerHTML = '';
   clients.forEach(client => {
     const clientRow = el('div.table__grid.table-row');
     const clientId = el('div.table__client-cell.table__id', client.id);
@@ -91,28 +113,46 @@ const renderClients = async (clients=[]) => {
     const clientUpdatedAt = el('div.table__client-cell', el('div.table__date', dataHandler(client.updatedAt)), el('div.table__time', timeHandler(client.updatedAt)));
     const contacts = client.contacts;
     const clientContacts = el('div.table__client-cell.contacts-grid');
-    // if (client.contacts.length < 6) {
 
-    // } else {
-
-    // }
-    contacts.forEach(contact => {
-      const btn = el('button.table__tooltip');
-      btn.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#${contact.type}"></use></svg>`;
-      let tooltip;
-      if (contact.type == 'tel' || contact.type == 'addtel') {
-          tooltip = `<a class="table__tel-link" href="tel:${contact.value}">${contact.value}</a>`;
-      } else {
-        tooltip = `${contact.type}: <a class="table__contact-link" href="${contact.value}">${contact.value}</a>`;
+    for (let contactType = 0; contactType < contacts.length; contactType++) {
+      const contact = contacts[contactType];
+      const createIcon = (icon = contact) => {
+        const btn = el('button.table__tooltip');
+        btn.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#${icon.type}"></use></svg>`;
+        let tooltip;
+        if (icon.type == 'tel' || icon.type == 'addtel') {
+            tooltip = `<a class="table__tel-link" href="tel:${icon.value}">${icon.value}</a>`;
+        } else {
+          tooltip = `${icon.type}: <a class="table__contact-link" href="${icon.value}">${icon.value}</a>`;
+        }
+        tippy(btn, {
+          content: tooltip,
+          theme: 'crm',
+          allowHTML: true,
+          interactive: true,
+        })
+        mount(clientContacts, btn);
       }
-      tippy(btn, {
-        content: tooltip,
-        theme: 'crm',
-        allowHTML: true,
-        interactive: true,
-      })
-      mount(clientContacts, btn);
-    })
+      if (contacts.length < 6) {
+        createIcon();
+      } else if (contacts.length > 5) {
+          createIcon();
+          if (contactType == 3) {
+            const restContactsBtn = el('button.table__rest-contacts');
+            restContactsBtn.innerText = contacts.length - contactType - 1;
+            mount(clientContacts, restContactsBtn);
+            restContactsBtn.addEventListener('click', () => {
+              while (clientContacts.firstChild) {
+                clientContacts.firstChild.remove();
+              }
+              contacts.forEach(contact => {
+                createIcon(contact);
+              })
+            })
+            break
+          }
+        }
+      }
 
     const clientEditBtn = el('button.table__btn.edit-btn');
     clientEditBtn.innerHTML = `<svg class="table__action-icon"><use xlink:href="#edit"></use></svg>Изменить`;
