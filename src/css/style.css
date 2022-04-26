@@ -6,7 +6,7 @@
 }
 
 :focus {
-  outline: 1px solid #9873FF;
+  outline: none;
 }
 
 .header {
@@ -174,12 +174,12 @@
 
 .table__contact-link {
   color: #9873FF;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .table__tel-link {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
   text-decoration: none;
@@ -197,6 +197,10 @@
   height: 16px;
   width: 16px;
   opacity: .7;
+}
+
+.icon-remove {
+  fill: #F06A4D;
 }
 
 .table__id {

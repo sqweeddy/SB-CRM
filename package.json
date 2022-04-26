@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "choices.js": "^10.1.0",
+    "inputmask": "^5.0.7",
     "micromodal": "^0.4.10",
     "redom": "^3.27.1",
     "svg-sprite-loader": "^6.0.11",

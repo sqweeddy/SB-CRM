@@ -14,6 +14,7 @@ import { el, setChildren, mount} from 'redom';
 import MicroModal from 'micromodal';
 import Choices from 'choices.js';
 import tippy from 'tippy.js';
+import Inputmask from "inputmask";
 import 'tippy.js/dist/tippy.css';
 import '../css/style.css';
 
@@ -26,7 +27,8 @@ const fio = document.getElementById('fio');
 const createdAt = document.getElementById('create-date');
 const updatedAt = document.getElementById('change-date');
 const tableData = document.querySelector('.table__data');
-const saveBtn = document.getElementById('savebtn');
+const saveBtn = document.getElementById('modal-1-content');
+const removeConfirm = document.getElementById('confirmbrn');
 const nameInput = document.getElementById('name');
 const surnameInput = document.getElementById('surname');
 const lastNameInput = document.getElementById('lastName');
@@ -122,8 +124,10 @@ const renderClients = async (clients=[]) => {
         let tooltip;
         if (icon.type == 'tel' || icon.type == 'addtel') {
             tooltip = `<a class="table__tel-link" href="tel:${icon.value}">${icon.value}</a>`;
+        } else if (icon.type == 'Email') {
+          tooltip = `<a class="table__contact-link" href="mailto:${icon.value}">${icon.value}</a>`;
         } else {
-          tooltip = `${icon.type}: <a class="table__contact-link" href="${icon.value}">${icon.value}</a>`;
+          tooltip = `${icon.type}: <a class="table__contact-link" href="https://${icon.value}">${icon.value}</a>`;
         }
         tippy(btn, {
           content: tooltip,
@@ -155,12 +159,17 @@ const renderClients = async (clients=[]) => {
       }
 
     const clientEditBtn = el('button.table__btn.edit-btn');
-    clientEditBtn.innerHTML = `<svg class="table__action-icon"><use xlink:href="#edit"></use></svg>Изменить`;
+    clientEditBtn.innerHTML = `<svg class="table__action-icon icon-edit"><use xlink:href="#edit"></use></svg>Изменить`;
     const clientRemoveBtn = el('button.table__btn.remove-btn');
-    clientRemoveBtn.innerHTML = `<svg class="table__action-icon"><use xlink:href="#cancel"></use></svg>Удалить`;
+    clientRemoveBtn.setAttribute('data-micromodal-trigger', "modal-2");
+    clientRemoveBtn.innerHTML = `<svg class="table__action-icon icon-remove"><use xlink:href="#cancel"></use></svg>Удалить`;
 
-    clientRemoveBtn.addEventListener('click', () => {
-      deleteClient({ element: clientRow, client: client })
+    clientRemoveBtn.addEventListener('click', (e) => {
+      // e.preventDefault();
+      // deleteClient({ element: clientRow, client: client });
+      removeConfirm.addEventListener('click', () => {
+        deleteClient({ element: clientRow, client: client });
+      })
     })
     clientEditBtn.addEventListener('click', () => {
       openEditModal(client);
@@ -182,34 +191,73 @@ const createContactAdd = (selectValue=null, inputValue=null) => {
   const iV = inputValue == null ? '' : inputValue;
   const sV = selectValue == null ? 'tel' : selectValue;
   const contactWrapper = el('div.modal__contact-wrapper')
-    const newSelect = el('select.modal__select',
+  const newSelect = el('select.modal__select',
     el('option', { value: 'tel' }, 'Телефон'),
     el('option', { value: 'addtel' }, 'Доп. телефон'),
     el('option', { value: 'Email' }, 'Email'),
     el('option', { value: 'VK' }, 'VK'),
     el('option', { value: 'Facebook' }, 'Facebook'));
 
-    const newInput = el('input.modal__contact-input', { type: 'text', placeholder: 'Введите данные контакта' });
-    newInput.value = iV;
-    newSelect.value = sV;
-    const removeContact = el('button.modal__contact-remove', 'X');
-    removeContact.addEventListener('click', () => {
-      contactWrapper.remove();
-    })
+  const newInput = el('input.modal__contact-input', {  placeholder: 'Введите данные контакта' });
+  newInput.value = iV;
+  newSelect.value = sV;
+  const setInputMask = () => {
+    Inputmask.remove(newInput);
+    switch (newSelect.value) {
+      case 'tel':
+        console.log('tel');
+        Inputmask({"mask": "+ 7 (999) 999-99-99",}).mask(newInput);
+        break;
 
-    setChildren(contactWrapper, [newSelect, newInput, removeContact]);
+      case 'addtel':
+        console.log('tel');
+        Inputmask({"mask": "+ 7 (999) 999-99-99",}).mask(newInput);
+        break;
 
-    mount(modalContacts, contactWrapper);
-    const choices = new Choices(newSelect, {
-      shouldSort: false,
-      searchEnabled: false,
-      removeItemButton: false,
-      itemSelectText: '',
-      allowHTML: true
-    });
+      case 'Email':
+        Inputmask('email').mask(newInput);
+        break;
+
+      case 'VK':
+        console.log('vk');
+        Inputmask(['vk.com/*{1,10}']).mask(newInput);
+        break;
+
+      case 'Facebook':
+        console.log('fb');
+        Inputmask({"mask": "fb.com/*{1,10}",}).mask(newInput);
+        break;
+
+      default:
+        break;
+    };
+  };
+  setInputMask()
+
+  newSelect.addEventListener('change', () => {
+    setInputMask()
+  })
+
+  const removeContact = el('button.modal__contact-remove');
+  removeContact.innerHTML = `<svg class="modal__contact-remove-icon"><use xlink:href="#cancel"></use></svg>`;
+  removeContact.addEventListener('click', () => {
+    contactWrapper.remove();
+  })
+
+  setChildren(contactWrapper, [newSelect, newInput, removeContact]);
+
+  mount(modalContacts, contactWrapper);
+  const choices = new Choices(newSelect, {
+    shouldSort: false,
+    searchEnabled: false,
+    removeItemButton: false,
+    itemSelectText: '',
+    allowHTML: true
+  });
 };
 
-modalBtnAddContact.addEventListener('click', () => {
+modalBtnAddContact.addEventListener('click', (e) => {
+  e.preventDefault();
   if (document.querySelectorAll('.modal__contact-wrapper').length < 10) {
     createContactAdd();
   }
@@ -235,25 +283,29 @@ const parseContacts = () => {
 }
 
 const createClient = async (id = null) => {
-  const method = id == null ? 'POST' : 'PATCH';
-  const clientId = id == null ? '' : id;
-  fetch(new URL(clientId, apiUrl), {
-    method: method,
-    body: JSON.stringify({
-      name: nameInput.value.trim(),
-      surname: surnameInput.value.trim(),
-      lastName: lastNameInput.value.trim(),
-      contacts: parseContacts(),
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+  try {
+    const method = id == null ? 'POST' : 'PATCH';
+    const clientId = id == null ? '' : id;
+    const response = await fetch(new URL(clientId, apiUrl), {
+      method: method,
+      body: JSON.stringify({
+        name: nameInput.value.trim(),
+        surname: surnameInput.value.trim(),
+        lastName: lastNameInput.value.trim(),
+        contacts: parseContacts(),
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    alert(error.message);
+  }
   MicroModal.close('modal-1');
   renderClients();
 };
 
-saveBtn.addEventListener('click', () => {
+saveBtn.addEventListener('submit', async () => {
   if (clientId.textContent != '') {
     createClient(clientId.textContent)
   } else createClient();
@@ -261,13 +313,18 @@ saveBtn.addEventListener('click', () => {
 console.log(getData());
 
 const deleteClient = async ({element, client}) => {
-  if (!confirm('Вы уверены?')) {
-    return
-  };
-  element.remove();
-  await fetch(`http://localhost:3000/api/clients/${client.id}`, {
+  try {
+    const response = await fetch(`http://localhost:3000/api/clients/${client.id}`, {
     method: 'DELETE'
   });
+  if (response.status == '404'|| response.status == '422') {
+    throw new Error ('Что-то пошло не так...');
+  }
+  } catch (error) {
+    alert(error.message);
+  }
+  element.remove();
+  MicroModal.close('modal-2');
   renderClients();
 }
 
@@ -287,9 +344,6 @@ const openEditModal = async (client) => {
   client.contacts.forEach(contact => {
     createContactAdd(contact.type, contact.value);
   });
-  // saveBtn.addEventListener('click', () => {
-  //   createClient(client.id);
-  // });
 };
 
 
@@ -306,28 +360,31 @@ id.addEventListener('click', async () => {
   const clients = await getData();
   sorted = clients;
   const icon = id.querySelector('.table__sort-icon');
+  const sorting = (direction) => {
+    if (direction == 'down') {
+      sorted.sort(function(a, b) {
+        if(a.id < b.id ) return -1;
+        if(a.id > b.id ) return 1;
+        return 0;
+      });
+    } else {
+      sorted.sort(function(a, b) {
+        if(a.id < b.id ) return 1;
+        if(a.id > b.id ) return -1;
+        return 0;
+      });
+    };
+  };
   if (id.classList.contains('table__title--active') && id.querySelector('.table__sort-icon--active')) {
-    sorted.sort(function(a, b) {
-      if(a.id < b.id ) return 1;
-      if(a.id > b.id ) return -1;
-      return 0;
-    });
+    sorting('up');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else if (id.classList.contains('table__title--active')) {
-    sorted.sort(function(a, b) {
-      if(a.id < b.id ) return -1;
-      if(a.id > b.id ) return 1;
-      return 0;
-    });
+    sorting('down');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else {
-    sorted.sort(function(a, b) {
-      if(a.id < b.id ) return -1;
-      if(a.id > b.id ) return 1;
-      return 0;
-    });
+    sorting('down');
     id.classList.toggle('table__title--active');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
@@ -345,45 +402,44 @@ fio.addEventListener('click', async () => {
   const clients = await getData();
   sorted = clients;
   const icon = fio.querySelector('.table__sort-icon');
+  const sorting = (direction) => {
+    if (direction == 'down') {
+      sorted.sort(function(a, b) {
+        if(a.surname < b.surname ) return -1;
+        if(a.surname > b.surname ) return 1;
+        if (a.lastName > b.lastName) return -1;
+        if (a.lastName < b.lastName) return 1;
+        if(a.name < b.name ) return 1;
+        if(a.name > b.name ) return -1;
+        return 0;
+      });
+    } else {
+      sorted.sort(function(a, b) {
+        if(a.surname < b.surname ) return 1;
+        if(a.surname > b.surname ) return -1;
+        if (a.lastName > b.lastName) return 1;
+        if (a.lastName < b.lastName) return -1;
+        if(a.name < b.name ) return -1;
+        if(a.name > b.name ) return 1;
+        return 0;
+      });
+    };
+  };
   if (fio.classList.contains('table__title--active') && fio.querySelector('.table__sort-icon--active')) {
-    sorted.sort(function(a, b) {
-      if(a.surname < b.surname ) return 1;
-      if(a.surname > b.surname ) return -1;
-      if (a.lastName > b.lastName) return 1;
-      if (a.lastName < b.lastName) return -1;
-      if(a.name < b.name ) return -1;
-      if(a.name > b.name ) return 1;
-      return 0;
-    });
+    sorting('up');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else if (fio.classList.contains('table__title--active')) {
-    sorted.sort(function(a, b) {
-      if(a.surname < b.surname ) return -1;
-      if(a.surname > b.surname ) return 1;
-      if (a.lastName > b.lastName) return -1;
-      if (a.lastName < b.lastName) return 1;
-      if(a.name < b.name ) return 1;
-      if(a.name > b.name ) return -1;
-      return 0;
-    });
+    sorting('down');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else {
-    sorted.sort(function(a, b) {
-      if(a.surname < b.surname ) return -1;
-      if(a.surname > b.surname ) return 1;
-      if (a.lastName > b.lastName) return -1;
-      if (a.lastName < b.lastName) return 1;
-      if(a.name < b.name ) return 1;
-      if(a.name > b.name ) return -1;
-      return 0;
-    });
+    sorting('down');
     fio.classList.toggle('table__title--active');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
-  }
-})
+  };
+});
 
 createdAt.addEventListener('click', async () => {
   id.classList.remove('table__title--active');
@@ -396,33 +452,36 @@ createdAt.addEventListener('click', async () => {
   const clients = await getData();
   sorted = clients;
   const icon = createdAt.querySelector('.table__sort-icon');
+  const sorting = (direction) => {
+    if (direction == 'down') {
+      sorted.sort(function(a, b) {
+        if(a.createdAt < b.createdAt) return -1;
+        if(a.createdAt > b.createdAt) return 1;
+        return 0;
+      });
+    } else {
+      sorted.sort(function(a, b) {
+        if(a.createdAt < b.createdAt) return 1;
+        if(a.createdAt > b.createdAt) return -1;
+        return 0;
+      });
+    };
+  };
   if (createdAt.classList.contains('table__title--active') && createdAt.querySelector('.table__sort-icon--active')) {
-    sorted.sort(function(a, b) {
-      if(a.createdAt < b.createdAt) return 1;
-      if(a.createdAt > b.createdAt) return -1;
-      return 0;
-    });
+    sorting('up');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else if (createdAt.classList.contains('table__title--active')) {
-    sorted.sort(function(a, b) {
-      if(a.createdAt < b.createdAt) return -1;
-      if(a.createdAt > b.createdAt) return 1;
-      return 0;
-    });
+    sorting('down');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else {
-    sorted.sort(function(a, b) {
-      if(a.createdAt < b.createdAt) return -1;
-      if(a.createdAt > b.createdAt) return 1;
-      return 0;
-    });
+    sorting('down');
     createdAt.classList.toggle('table__title--active');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
-  }
-})
+  };
+});
 
 updatedAt.addEventListener('click', async () => {
   id.classList.remove('table__title--active');
@@ -435,33 +494,36 @@ updatedAt.addEventListener('click', async () => {
   const clients = await getData();
   sorted = clients;
   const icon = updatedAt.querySelector('.table__sort-icon');
+  const sorting = (direction) => {
+    if (direction == 'down') {
+      sorted.sort(function(a, b) {
+        if(a.updatedAt < b.updatedAt) return -1;
+        if(a.updatedAt > b.updatedAt) return 1;
+        return 0;
+      });
+    } else {
+      sorted.sort(function(a, b) {
+        if(a.updatedAt < b.updatedAt) return 1;
+        if(a.updatedAt > b.updatedAt) return -1;
+        return 0;
+      });
+    };
+  };
   if (updatedAt.classList.contains('table__title--active') && updatedAt.querySelector('.table__sort-icon--active')) {
-    sorted.sort(function(a, b) {
-      if(a.updatedAt < b.updatedAt) return 1;
-      if(a.updatedAt > b.updatedAt) return -1;
-      return 0;
-    });
+    sorting('up')
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else if (updatedAt.classList.contains('table__title--active')) {
-    sorted.sort(function(a, b) {
-      if(a.updatedAt < b.updatedAt) return -1;
-      if(a.updatedAt > b.updatedAt) return 1;
-      return 0;
-    });
+    sorting('down');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
   } else {
-    sorted.sort(function(a, b) {
-      if(a.updatedAt < b.updatedAt) return -1;
-      if(a.updatedAt > b.updatedAt) return 1;
-      return 0;
-    });
+    sorting('down');
     updatedAt.classList.toggle('table__title--active');
     icon.classList.toggle('table__sort-icon--active');
     renderClients(sorted)
-  }
-})
+  };
+});
 
 /* Search */
 
@@ -469,10 +531,10 @@ const filtration = async () => {
   const clients = await getData();
   const filtredArr = clients.filter(client => client.name.includes(search.value) || client.surname.includes(search.value) || client.lastName.includes(search.value));
   renderClients(filtredArr);
-}
+};
 
 search.addEventListener('input', async () => {
   setTimeout(filtration, 300)
-})
+});
 
 renderClients();
