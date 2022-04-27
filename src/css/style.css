@@ -40,7 +40,12 @@
   padding: 12px 0 13px 16px;
   width: 581px;
   height: 44px;
-  border: 1px solid #33333333
+  border: 1px solid #33333333;
+  transition: border .3s ease;
+}
+
+.header__input:focus {
+  border-color: #9873ff;
 }
 
 .header__input::placeholder {
@@ -128,6 +133,27 @@
   background: transparent;
   border: 1px solid #9873FF;
   cursor: pointer;
+  transition: color .3s ease, border .3s ease, background-color .3s ease;
+}
+
+.add-client-svg {
+  width: 23px;
+  height: 16px;
+  fill: #9873ff;
+  transition: fill .3s ease;
+}
+
+.add-client-btn:hover, .add-client-btn:focus {
+  color: #fff;
+  background-color: #9873ff;
+}
+
+.add-client-btn:hover .add-client-svg, .add-client-btn:focus .add-client-svg {
+  fill: #fff;
+}
+
+.add-client-btn:active {
+  background-color: #8052FF;
 }
 
 .table-row {
@@ -154,6 +180,10 @@
   width: 20px;
   border: none;
   background: transparent;
+}
+
+.table__tooltip:focus .table__contact-icon,.table__tooltip:hover .table__contact-icon {
+  opacity: 1;
 }
 
 .table__rest-contacts {
@@ -190,6 +220,7 @@
   width: 100%;
   fill: #9873FF;
   opacity: .7;
+  transition: opacity .3s ease;
 }
 
 .table__action-icon {
@@ -221,10 +252,19 @@
   font-size: 14px;
   color: #333333;
   cursor: pointer;
+  transition: color .3s ease;
+}
+
+.edit-btn:hover, .edit-btn:focus {
+  color: #9873ff;
 }
 
 .remove-btn {
   padding-right: 20px;
+}
+
+.remove-btn:hover, .remove-btn:focus {
+  color: #F06A4D;
 }
 
 
@@ -253,6 +293,10 @@
   padding: 7.5px;
   font-size: 12px;
   color: #333333;
+}
+
+.choices.is-focused .choices__inner  {
+  border-color: #9873FF;
 }
 
 /* loader */

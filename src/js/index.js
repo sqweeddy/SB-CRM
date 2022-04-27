@@ -1,6 +1,7 @@
 import '../css/normalize.css';
 import '../css/modal.css';
 import '../css/choices.min.css'
+import client from '../img/client.svg';
 import canelIcon from '../img/cancel.svg';
 import editIcon from '../img/edit.svg';
 import vkIcon from '../img/VK.svg';
@@ -134,6 +135,8 @@ const renderClients = async (clients=[]) => {
           theme: 'crm',
           allowHTML: true,
           interactive: true,
+          hideOnClick: true,
+          trigger: 'mouseenter',
         })
         mount(clientContacts, btn);
       }
