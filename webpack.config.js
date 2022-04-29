@@ -5,22 +5,22 @@ const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
 const { extendDefaultPlugins } = require("svgo");
 
 module.exports = (env) => ({
-  entry: './src/js/index.js',
+  entry: ['regenerator-runtime/runtime', './src/js/index.js'],
   output: {
     filename: 'main.js'
   },
   module: {
     rules: [
-      // {
-      //   test: /\.js$/,
-      //   exclude: /node_modules/,
-      //   use: {
-      //     loader: 'babel-loader',
-      //     options: {
-      //       presets: ['@babel/preset-env']
-      //     }
-      //   }
-      // },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env']
+          }
+        }
+      },
       {
         test: /\.css$/i,
         use: [

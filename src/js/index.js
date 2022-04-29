@@ -530,14 +530,16 @@ updatedAt.addEventListener('click', async () => {
 
 /* Search */
 
-const filtration = async () => {
-  const clients = await getData();
-  const filtredArr = clients.filter(client => client.name.includes(search.value) || client.surname.includes(search.value) || client.lastName.includes(search.value));
-  renderClients(filtredArr);
+const searching = async () => {
+  const response = await fetch(`http://localhost:3000/api/clients?search=${search.value}`, {
+    method: 'GET'
+  });
+  const result = await response.json();
+  renderClients(result);
 };
 
 search.addEventListener('input', async () => {
-  setTimeout(filtration, 300)
+  setTimeout(searching, 300)
 });
 
 renderClients();
