@@ -73,40 +73,10 @@ const timeHandler = (date) => {
   return handledTime;
 }
 
-const makeid = (length) => {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  const charactersLength = characters.length;
-  for ( var i = 0; i < length; i++ ) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
-// const createContactIcon = (contacts) => {
-//   contacts.forEach(contact => {
-//     const btn = el('button.table__tooltip');
-//     btn.innerHTML = `<svg class="table__contact-icon"><use xlink:href="#${contact.type}"></use></svg>`;
-//     let tooltip;
-//     if (contact.type == 'tel' || contact.type == 'addtel') {
-//         tooltip = `<a class="table__tel-link" href="tel:${contact.value}">${contact.value}</a>`;
-//     } else {
-//       tooltip = `${contact.type}: <a class="table__contact-link" href="${contact.value}">${contact.value}</a>`;
-//     }
-//     tippy(btn, {
-//       content: tooltip,
-//       theme: 'crm',
-//       allowHTML: true,
-//       interactive: true,
-//     })
-//     mount(clientContacts, btn);
-//   })
-// }
-
-const renderClients = async (clients=[]) => {
+const renderClients = async (arr) => {
   const loader = el('div.loader');
   mount(tableData, loader);
-  clients = clients.length === 0 ? await getData() : clients;
+  const clients = arr ? arr :await getData();
   tableData.innerHTML = '';
   clients.forEach(client => {
     const clientRow = el('div.table__grid.table-row');
@@ -168,8 +138,6 @@ const renderClients = async (clients=[]) => {
     clientRemoveBtn.innerHTML = `<svg class="table__action-icon icon-remove"><use xlink:href="#cancel"></use></svg>Удалить`;
 
     clientRemoveBtn.addEventListener('click', (e) => {
-      // e.preventDefault();
-      // deleteClient({ element: clientRow, client: client });
       removeConfirm.addEventListener('click', () => {
         deleteClient({ element: clientRow, client: client });
       })
@@ -535,11 +503,14 @@ const searching = async () => {
     method: 'GET'
   });
   const result = await response.json();
+  console.log(result);
   renderClients(result);
 };
 
+let timeout;
 search.addEventListener('input', async () => {
-  setTimeout(searching, 300)
+  clearTimeout(timeout);
+  timeout = setTimeout(searching, 400);
 });
 
 renderClients();
