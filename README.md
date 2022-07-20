@@ -1,6 +1,6 @@
 # SB-CRM
 
-CRM system/
+CRM system.
 
 ## Getting Started
 
